@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+    * {
+        margin: 0px auto;
+        padding: 0px;
+        list-style: none;
+        text-align: center;
+        font-size: 20px;
+    }
+
+    .nbox {
+        background-color: red;
+    }
+
+    .nitem {
+        float: left;
+        text-align: center;
+        font-size: 33px;
+        font-weight: bold;
+        color: transparent;
+        cursor: pointer;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="appbox">
+        <div class="nbox" :style="'width:'+width+'px;height:'+height+'px;'" id="piclist">
+            <div class="nitem" :class="{'remove':index==0}" v-for="(item,index) in itemlist" :style="'background:url('+img+') -'+px(index)+'px -'+py(index)+'px no-repeat;width:'+width/cols+'px;height:'+height/rows+'px;background-size:'+width+'px '+height+'px;'" :index="index">
+                {{index}}
+            </div>
+        </div>
+        <a href="javascript:;" id="box_rand">打乱</a>
+    </div>
+</body>
+
+</html>
+<script src="js/jquery.js"></script>
+<script src="js/vue.js"></script>
+<script>
+var vm = new Vue({
+    el: "#appbox",
+    data: {
+        itemlist: [],
+        width: 600,
+        height: 600,
+        rows: 3,
+        cols: 3,
+        img: "imgs/bg.jpg"
+    },
+    methods: {
+        px: function(ii) {
+            return (ii % this.cols) * (this.width / this.cols);
+        },
+        py: function(ii) {
+            return parseInt(ii / this.cols) * (this.height / this.rows);
+        }
+    },
+    watch: {
+        rows: function() {
+            vm.itemlist.length = 0;
+            for (i = 0; i < vm.rows * vm.cols; i++) {
+                vm.itemlist.push(i);
+            }
+        }
+    }
+});
+for (i = 0; i < vm.rows * vm.cols; i++) {
+    vm.itemlist.push(i);
+}
+vm.$nextTick(function() {
+    $(".remove").css({ "background": "none", "background-color": "green" });
+});
+var strlist = "";
+var listarray = new Array();
+
+function getrow(index) {
+    return parseInt(index / vm.cols);
+}
+
+function getcol(index) {
+    return index % vm.cols;
+}
+
+function getBound(index) {
+    var left = index - 1;
+    var right = index + 1;
+    var top = index - vm.cols;
+    var bottom = index + vm.cols;
+    var len = vm.itemlist.length; 
+    var row = getrow(index); 
+    var col = getcol(index); 
+    var ra = new Array();
+    
+    if (left >= 0 && left < len && getrow(left) == row) {
+        ra.push(left);
+    }
+    if (right >= 0 && right < len && getrow(right) == row) {
+        ra.push(right);
+    }
+    if (top >= 0 && top < len && getcol(top) == col) {
+        ra.push(top);
+    }
+    if (bottom >= 0 && bottom < len && getcol(bottom) == col) {
+        ra.push(bottom);
+    }
+    return ra;
+}
+
+function box_swap(i, j) { 
+    var iobj = $("#piclist .nitem").eq(i);
+    var jobj = $("#piclist .nitem").eq(j);
+    var tobj = iobj.clone(); 
+    jobj.after(tobj);
+    iobj.replaceWith(jobj);
+}
+var olen = 0;
+var oi = 0;
+
+function box_rand(times) { 
+    for (i = 0; i < times; i++) {
+        oindex = $(".remove").index();
+        oa = getBound(oindex); 
+        olen = oa.length;
+        oi = Math.floor(Math.random() * olen);
+        cindex = oa[oi];
+        box_swap(cindex, oindex);
+    }
+    listarray.length = 0;
+    $.each($(".nitem"), function(i, item) {
+        listarray.push($(item).attr("index"));
+    });
+    if (listarray.join(',') == vm.itemlist.join(',')) {
+        box_rand(times);
+    }
+}
+
+var cindex = 0; 
+var oa = new Array(); 
+var oindex = 0; 
+$(function() {
+    $("#box_rand").click(function() {
+        box_rand(300);
+    });
+    $(".nitem").live("click", function(ev) {
+        cindex = $(ev.target).index();
+        oindex = $(".remove").index();
+        oa = getBound(oindex); 
+        if ($.inArray(cindex, oa) < 0) { 
+            return false; 
+        }
+        
+        box_swap(oindex, cindex); 
+        listarray.length = 0;
+        $.each($(".nitem"), function(i, item) {
+            listarray.push($(item).attr("index"));
+        });
+        if (listarray.join(',') == vm.itemlist.join(',')) {
+            alert("success");
+        } else {
+            console.info("failed");
+        }
+    });
+    
+})
+</script>
